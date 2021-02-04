@@ -8,26 +8,33 @@
 
     <div class="weather-app">
       <div class="row">
-        
         <div class="form col-lg-3 offset-lg-1 col-md-3 offset-md-1 col-sm-10 offset-sm-1  col-12">
-          <q-input 
-          v-model="search"
-          @keyup.enter="getWeatherBySearch" 
-          label="Название"
-          color="purple"
-          label-color="purple"
-          :hint="`${this.apiErr}`"
-          hint-color="purple"
+          <q-select
+            filled
+            :value="model"
+            use-input
+            hide-selected
+            fill-input
+            input-debounce="0"
+            :options="options"
+            @filter="filterFn"
+            @input-value="setModel"
+            @keyup.enter="getWeatherBySearch" 
+            label="Название"
+            color="purple"
+            label-color="purple"
+            :hint="`${this.apiErr}`"
+            hint-color="purple"
           >
-            <template v-slot:append>
-              <q-icon 
-              name="close" 
-              @click="search = ''" 
-              class="cursor-pointer" 
-              color="purple"
-              />
+            <template v-slot:no-option>
+              <q-item>
+                <q-item-section class="text-grey">
+                  No results
+                </q-item-section>
+              </q-item>
             </template>
-          </q-input>
+          </q-select>
+
           <q-btn 
             @click="getWeatherBySearch"
             color="purple" 
@@ -75,17 +82,19 @@ export default {
   name: 'PageIndex',
   data(){
     return{
-      search:'',
       weatherData: null,
       apiUrl: 'https://api.openweathermap.org/data/2.5/forecast',
       apiKey:'ce77c1cc210b29be3e98700d960f9a76',
-      apiErr:''
+      apiErr:'',
+      model: '',
+      options: this.cityDate,
+      cityDate: []
     }
   },
   methods: {
     getWeatherBySearch(){
       this.apiErr = ''
-      this.$axios(`${ this.apiUrl }?q=${ this.search }&appid=${ this.
+      this.$axios(`${ this.apiUrl }?q=${ this.model }&appid=${ this.
       apiKey }&units=metric&lang=ru`)
       .then(response => {
           this.weatherData = response.data
@@ -101,6 +110,21 @@ export default {
               color: 'red'
           })
         });
+    },
+    filterFn (val, update, abort) {
+      this.$axios('https://gist.githubusercontent.com/gorborukov/0722a93c35dfba96337b/raw/435b297ac6d90d13a68935e1ec7a69a225969e58/russia')
+      .then((response) => {
+        for (let i = 0; i < response.data.length; i++) {
+          this.cityDate.push(response.data[i].city)
+        }
+      })
+      update(() => {
+        const needle = val.toLocaleLowerCase()
+        this.options = this.cityDate.filter(v => v.toLocaleLowerCase().indexOf(needle) > -1)
+      })
+    },
+    setModel (val) {
+      this.model = val
     }
   }
 }
@@ -152,7 +176,7 @@ export default {
   }
   .form{
      color: #000;
-    .q-input{
+    .q-select{
       margin-top: 20px;
       .q-icon{
         font-size: 30px;
