@@ -49,21 +49,21 @@
 
           <div class="result__day">
             <div class="day-change">Сегодня</div>
-            <img :src="`http://openweathermap.org/img/wn/${weatherData.list[0].weather[0].icon}@2x.png`" alt="">
+            <img :src="`${apiImg}/${weatherData.list[0].weather[0].icon}@2x.png`" alt="">
             <div class="descr">{{weatherData.list[0].weather[0].description}}</div>
             <div class="temp">{{Math.round(weatherData.list[0].main.temp)}}</div>
           </div>
 
           <div class="result__day">
             <div class="day-change">Завтра</div>
-            <img :src="`http://openweathermap.org/img/wn/${weatherData.list[8].weather[0].icon}@2x.png`" alt="">
+            <img :src="`${apiImg}/${weatherData.list[8].weather[0].icon}@2x.png`" alt="">
             <div class="descr">{{weatherData.list[8].weather[0].description}}</div>
             <div class="temp">{{Math.round(weatherData.list[8].main.temp)}}</div>
           </div>
 
           <div class="result__day">
             <div class="day-change">Послезавтра</div>
-            <img :src="`http://openweathermap.org/img/wn/${weatherData.list[16].weather[0].icon}@2x.png`" alt="">
+            <img :src="`${apiImg}/${weatherData.list[16].weather[0].icon}@2x.png`" alt="">
             <div class="descr">{{weatherData.list[16].weather[0].description}}</div>
             <div class="temp">{{Math.round(weatherData.list[16].main.temp)}}</div>
           </div>
@@ -85,11 +85,15 @@ export default {
       weatherData: null,
       apiUrl: 'https://api.openweathermap.org/data/2.5/forecast',
       apiKey:'ce77c1cc210b29be3e98700d960f9a76',
+      apiImg: 'http://openweathermap.org/img/wn',
       apiErr:'',
       model: '',
       options: this.cityDate,
       cityDate: []
     }
+  },
+  created() {
+    this.getListOfCity()
   },
   methods: {
     getWeatherBySearch(){
@@ -98,11 +102,11 @@ export default {
       apiKey }&units=metric&lang=ru`)
       .then(response => {
           this.weatherData = response.data
-      }).catch(err => {
-          if (err.response.status === 404) {
+      }).catch(error => {
+          if (error.response.status === 404) {
             this.apiErr = 'Населенный пункт не найден!'
           }
-          if (err.response.status === 400) {
+          if (error.response.status === 400) {
             this.apiErr = 'Напишите что-нибудь!'
           }
           Notify.create({
@@ -111,13 +115,20 @@ export default {
           })
         });
     },
-    filterFn (val, update, abort) {
+
+    getListOfCity(){
       this.$axios('https://gist.githubusercontent.com/gorborukov/0722a93c35dfba96337b/raw/435b297ac6d90d13a68935e1ec7a69a225969e58/russia')
       .then((response) => {
         for (let i = 0; i < response.data.length; i++) {
           this.cityDate.push(response.data[i].city)
         }
-      })
+      }).catch(error => {
+          console.log('-----error-------');
+          console.log(error)
+        })
+    },
+
+    filterFn (val, update) {
       update(() => {
         const needle = val.toLocaleLowerCase()
         this.options = this.cityDate.filter(v => v.toLocaleLowerCase().indexOf(needle) > -1)
